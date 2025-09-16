@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}创建新项目 - Writer Prompt{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>创建新项目</h2>
+    <form method="POST" action="{{ url_for('project.new_project') }}" id="new-project-form">
+        <div class="form-group">
+            <label for="name">项目名称</label>
+            <input type="text" id="name" name="name" required class="form-control" 
+                   placeholder="请输入项目名称">
+        </div>
+        
+        <div class="form-group">
+            <label for="description">项目描述</label>
+            <textarea id="description" name="description" class="form-control" 
+                      rows="4" placeholder="请简要描述您的项目..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="genre">作品类型</label>
+            <select id="genre" name="genre" class="form-control">
+                <option value="novel">小说</option>
+                <option value="script">剧本</option>
+                <option value="article">文章</option>
+                <option value="other">其他</option>
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">创建项目</button>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block helper_content %}
+<div class="helper-content">
+    <h3>创建项目指南</h3>
+    <div class="helper-info">
+        <h4>如何创建一个好的项目？</h4>
+        <ul>
+            <li>选择一个清晰简洁的项目名称</li>
+            <li>添加详细的项目描述，包括核心概念</li>
+            <li>选择合适的作品类型，以获得相应的模板支持</li>
+        </ul>
+        
+        <h4>创建后可以做什么？</h4>
+        <ul>
+            <li>在全文设定中完善世界观和人物设定</li>
+            <li>使用纲要生成功能规划故事结构</li>
+            <li>通过正文生成工具开始创作</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('new-project-form');
+    form.addEventListener('submit', function(e) {
+        const nameInput = document.getElementById('name');
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            alert('请输入项目名称！');
+            nameInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

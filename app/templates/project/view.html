@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.name }} - Writer Prompt{% endblock %}
+
+{% block content %}
+<div class="project-view">
+    <div class="project-header">
+        <h2>{{ project.name }}</h2>
+        <div class="project-meta">
+            <span class="created-at">创建于: {{ project.created_at.strftime('%Y-%m-%d') }}</span>
+            <span class="updated-at">最后更新: {{ project.updated_at.strftime('%Y-%m-%d') }}</span>
+        </div>
+        {% if project.description %}
+            <div class="project-description">
+                {{ project.description }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="project-modules">
+        <div class="module-card">
+            <h3>全文设定</h3>
+            <p>管理项目的世界观、人物、背景等整体设定。</p>
+            <div class="module-actions">
+                <a href="{{ url_for('project.settings', project_id=project.id) }}" class="btn">进入设定</a>
+            </div>
+        </div>
+
+        <div class="module-card">
+            <h3>纲要生成</h3>
+            <p>规划和管理故事的结构、章节和关键情节。</p>
+            <div class="module-actions">
+                <a href="{{ url_for('outline.new_outline', project_id=project.id) }}" class="btn">管理纲要</a>
+            </div>
+        </div>
+
+        <div class="module-card">
+            <h3>正文生成</h3>
+            <p>基于设定和纲要，开始创作故事内容。</p>
+            <div class="module-actions">
+                <a href="{{ url_for('content.new_content', project_id=project.id) }}" class="btn">开始写作</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block helper_content %}
+<div class="helper-content">
+    <h3>项目信息</h3>
+    <div class="helper-info">
+        <div class="project-stats">
+            <h4>项目统计</h4>
+            <ul>
+                <li>设定数量: {{ project.settings|length }}</li>
+                <li>纲要数量: {{ project.outlines|length }}</li>
+                <li>内容片段: {{ project.contents|length }}</li>
+            </ul>
+        </div>
+
+        <div class="quick-actions">
+            <h4>快捷操作</h4>
+            <ul>
+                <li><a href="#" onclick="showExportDialog()">导出项目</a></li>
+                <li><a href="#" onclick="showBackupDialog()">创建备份</a></li>
+                <li><a href="#" onclick="showSettingsDialog()">项目设置</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showExportDialog() {
+    // TODO: 实现导出功能
+    alert('导出功能开发中...');
+}
+
+function showBackupDialog() {
+    // TODO: 实现备份功能
+    alert('备份功能开发中...');
+}
+
+function showSettingsDialog() {
+    // TODO: 实现设置功能
+    alert('设置功能开发中...');
+}
+</script>
+{% endblock %}

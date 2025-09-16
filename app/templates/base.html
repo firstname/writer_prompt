@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Writer Prompt{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <div class="project-list">
+                {% if projects %}
+                    {% for project in projects %}
+                        <div class="project-item">
+                            <h3>{{ project.name }}</h3>
+                            <div class="module-list">
+                                <div class="module-item">
+                                    <a href="{{ url_for('project.settings', project_id=project.id) }}">全文设定</a>
+                                </div>
+                                <div class="module-item">
+                                    <a href="{{ url_for('outline.new_outline', project_id=project.id) }}">纲要生成</a>
+                                </div>
+                                <div class="module-item">
+                                    <a href="{{ url_for('content.new_content', project_id=project.id) }}">正文生成</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>暂无项目，<a href="{{ url_for('project.new_project') }}">创建新项目</a></p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 中间主要内容区 -->
+        <div class="main-content">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- 右侧辅助区 -->
+        <div class="helper-panel">
+            {% block helper_content %}
+            <div class="helper-content">
+                <h3>辅助信息</h3>
+                <div class="helper-info">
+                    <!-- 辅助内容将根据当前页面动态加载 -->
+                </div>
+            </div>
+            {% endblock %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

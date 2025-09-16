@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="welcome-section">
+    {% if projects %}
+        <h2>现有项目列表</h2>
+        <div class="project-grid">
+            {% for project in projects %}
+            <div class="project-card">
+                <h3>{{ project.name }}</h3>
+                <p>{{ project.description }}</p>
+                <div class="project-actions">
+                    <a href="{{ url_for('project.view', project_id=project.id) }}" class="btn">查看项目</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h2>欢迎使用Writer Prompt</h2>
+            <p>看起来您还没有创建任何项目。现在就开始创建您的第一个项目吧！</p>
+            <a href="{{ url_for('project.new_project') }}" class="btn btn-primary">创建新项目</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block helper_content %}
+<div class="helper-content">
+    <h3>快速指南</h3>
+    <div class="helper-info">
+        <h4>如何使用Writer Prompt？</h4>
+        <ol>
+            <li>创建新项目并设置基本信息</li>
+            <li>在全文设定中完善故事背景</li>
+            <li>使用纲要生成功能规划故事结构</li>
+            <li>利用正文生成工具开始创作</li>
+        </ol>
+    </div>
+</div>
+{% endblock %}
