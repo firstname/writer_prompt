@@ -1,8 +1,8 @@
 from app import db
 from datetime import datetime
 
-# 导入灵感和创意模块的模型
-from .creation import Inspiration, InspirationMaterial, CreativeIdea
+# 导入规划模块的模型
+from .planning import InitialIdea, CreativeExpansion, BasicConcept
 
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -16,8 +16,9 @@ class Project(db.Model):
     settings = db.relationship('Setting', backref='project', lazy=True)
     outlines = db.relationship('Outline', backref='project', lazy=True)
     contents = db.relationship('Content', backref='project', lazy=True)
-    inspirations = db.relationship('Inspiration', backref='project', lazy=True)
-    ideas = db.relationship('CreativeIdea', backref='project', lazy=True)
+    initial_ideas = db.relationship('InitialIdea', backref='project', lazy=True)
+    creative_expansions = db.relationship('CreativeExpansion', backref='project', lazy=True)
+    basic_concepts = db.relationship('BasicConcept', backref='project', lazy=True)
 
 class Setting(db.Model):
     id = db.Column(db.Integer, primary_key=True)

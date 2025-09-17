@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <h2>初始灵感 - {{ project.title }}</h2>
+    
+    <!-- 输入灵感表单 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="initialIdeaForm" class="text-center">
+                <div class="form-group mb-4">
+                    <textarea class="form-control form-control-lg" id="content" name="content" rows="5" 
+                              placeholder="输入你的创作灵感，可以是一个真实事件、一个虚构的世界、想表达的主题、或是任何创作想法..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg">生成创意发散</button>
+            </form>
+        </div>
+    </div>
+    <div class="text-center">
+        <small class="text-muted">点击按钮后，AI将基于你的灵感生成10个不同方向的创意构思，包括作品简述、体裁、主题和创新点</small>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Form initialized');
+    $('#initialIdeaForm').on('submit', async function(e) {
+        e.preventDefault();
+        console.log('Form submitted');
+        
+        var $btn = $(this).find('button[type="submit"]');
+        var originalText = $btn.text();
+        var content = $('#content').val();
+        console.log('Content:', content);
+        
+        if (!content.trim()) {
+            alert('请输入灵感内容');
+            return;
+        }
+        
+        // 禁用按钮并显示加载状态
+        $btn.prop('disabled', true)
+           .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存灵感...');
+        
+        try {
+            console.log('Saving idea...');
+            // 第一步：保存灵感
+            const ideaResponse = await $.ajax({
+                url: "{{ url_for('planning.initial_idea', project_id=project.id) }}",
+                method: 'POST',
+                contentType: 'application/x-www-form-urlencoded',
+                data: {
+                    content: content,
+                    source_type: 'other'  // 默认设置为其他
+                }
+            });
+            console.log('Idea saved:', ideaResponse);
+            
+            if (!ideaResponse.id) {
+                throw new Error('保存灵感失败：未返回灵感ID');
+            }
+            
+            // 更新按钮状态
+            $btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成创意构思中...');
+            
+            console.log('Generating expansions...');
+            // 第二步：生成创意
+            const expansionUrl = "{{ url_for('planning.creative_expansions', project_id=project.id, idea_id=0) }}".replace('/0', '/' + ideaResponse.id);
+            console.log('Expansion URL:', expansionUrl);
+            const expansionResponse = await $.ajax({
+                url: expansionUrl,
+                method: 'POST',
+                contentType: 'application/json'
+            });
+            console.log('Expansion response:', expansionResponse);
+            
+            if (!expansionResponse.status === 'success') {
+                throw new Error('生成创意失败：' + (expansionResponse.error || '未知错误'));
+            }
+            
+            // 第三步：跳转到创意列表页
+            window.location.href = expansionUrl;
+            
+        } catch (error) {
+            console.error('Error:', error);
+            const errorMsg = error.responseJSON?.error || error.message || '操作失败，请重试';
+            alert(errorMsg);
+            $btn.prop('disabled', false).text(originalText);
+        }
+    });
+});
+</script>
+{% endblock %}

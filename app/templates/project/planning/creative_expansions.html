@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <h2>创意发散 - {{ project.title }}</h2>
+    
+    <!-- 原始灵感展示 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            原始灵感
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{ initial_idea.content }}</p>
+            <p class="card-text">
+                <small class="text-muted">
+                    来源: {{ {
+                        'real_event': '真实事件',
+                        'fictional_world': '虚构世界',
+                        'theme': '主题表达',
+                        'viewpoint': '观点表达',
+                        'other': '其他'
+                    }[initial_idea.source_type] }}
+                </small>
+            </p>
+        </div>
+    </div>
+    
+    <!-- 生成创意按钮 -->
+    {% if not expansions %}
+    <div class="text-center mb-4">
+        <button id="generateExpansions" class="btn btn-lg btn-primary">
+            生成创意发散
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- 创意列表 -->
+    <div id="expansionsList">
+        {% for expansion in expansions %}
+        <div class="card mb-4 {% if expansion.is_selected %}border-success{% endif %}">
+            <div class="card-header {% if expansion.is_selected %}bg-success text-white{% endif %}">
+                创意 #{{ loop.index }}
+                {% if expansion.is_selected %}
+                <span class="badge badge-light float-right">已选择</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ expansion.summary }}</h5>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>体裁:</strong> {{ expansion.genre }}
+                    </div>
+                    <div class="col-md-8">
+                        <strong>主题:</strong> {{ expansion.theme }}
+                    </div>
+                </div>
+                <div class="card-text mb-3">
+                    <strong>创新点:</strong><br>
+                    {{ expansion.innovation_points }}
+                </div>
+                
+                {% if not expansion.is_selected %}
+                <button class="btn btn-success select-expansion" 
+                        data-expansion-id="{{ expansion.id }}">
+                    选择此创意
+                </button>
+                {% else %}
+                <a href="{{ url_for('planning.basic_concept', 
+                                   project_id=project.id, 
+                                   expansion_id=expansion.id) }}" 
+                   class="btn btn-primary">
+                    生成基本构思
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 生成创意发散
+    $('#generateExpansions').on('click', function() {
+        $(this).prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...'
+        );
+        
+        $.ajax({
+            url: "{{ url_for('planning.creative_expansions', 
+                            project_id=project.id, 
+                            idea_id=initial_idea.id) }}",
+            method: 'POST',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('生成失败: ' + xhr.responseJSON.error);
+                $('#generateExpansions').prop('disabled', false)
+                    .html('生成创意发散');
+            }
+        });
+    });
+    
+    // 选择创意
+    $('.select-expansion').on('click', function() {
+        var $btn = $(this);
+        var expansionId = $btn.data('expansion-id');
+        
+        $btn.prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 选择中...'
+        );
+        
+        $.ajax({
+            url: "        $.ajax({
+            url: "{{ url_for('planning.select_expansion', project_id=project.id, expansion_id=0) }}".replace('/0', '/' + expansionId),
+            method: 'POST',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('选择失败: ' + xhr.responseJSON.error);
+                $btn.prop('disabled', false).html('选择此创意');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

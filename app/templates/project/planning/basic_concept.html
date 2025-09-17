@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <h2>作品基本构思 - {{ project.title }}</h2>
+    
+    <!-- 选定创意展示 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            选定创意
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">{{ expansion.summary }}</h5>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <strong>体裁:</strong> {{ expansion.genre }}
+                </div>
+                <div class="col-md-8">
+                    <strong>主题:</strong> {{ expansion.theme }}
+                </div>
+            </div>
+            <div class="card-text">
+                <strong>创新点:</strong><br>
+                {{ expansion.innovation_points }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- 生成构思按钮 -->
+    {% if not concept %}
+    <div class="text-center mb-4">
+        <button id="generateConcept" class="btn btn-lg btn-primary">
+            生成基本构思
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- 基本构思展示 -->
+    {% if concept %}
+    <div class="card mb-4">
+        <div class="card-header">
+            作品基本构思
+            <small class="text-muted float-right">
+                生成于: {{ concept.created_at.strftime('%Y-%m-%d %H:%M') }}
+            </small>
+        </div>
+        <div class="card-body">
+            <!-- 世界设定 -->
+            <div class="mb-4">
+                <h5>世界设定</h5>
+                <p>{{ concept.world_setting }}</p>
+            </div>
+            
+            <!-- 情节发展 -->
+            <div class="mb-4">
+                <h5>情节发展</h5>
+                <p>{{ concept.plot_development }}</p>
+            </div>
+            
+            <!-- 人物设定 -->
+            <div class="mb-4">
+                <h5>人物设定</h5>
+                <p>{{ concept.character_design }}</p>
+            </div>
+            
+            <!-- 结构设计 -->
+            <div class="mb-4">
+                <h5>结构设计</h5>
+                <p>{{ concept.structure_design }}</p>
+            </div>
+            
+            <!-- 风格设计 -->
+            <div class="mb-4">
+                <h5>风格设计</h5>
+                <p>{{ concept.style_design }}</p>
+            </div>
+            
+            <!-- 主题表达 -->
+            <div class="mb-4">
+                <h5>主题表达</h5>
+                <p>{{ concept.theme_expression }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 生成基本构思
+    $('#generateConcept').on('click', function() {
+        $(this).prop('disabled', true).html(
+            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...'
+        );
+        
+        $.ajax({
+            url: "{{ url_for('planning.basic_concept', 
+                            project_id=project.id, 
+                            expansion_id=expansion.id) }}",
+            method: 'POST',
+            success: function(response) {
+                location.reload();
+            },
+            error: function(xhr) {
+                alert('生成失败: ' + xhr.responseJSON.error);
+                $('#generateConcept').prop('disabled', false)
+                    .html('生成基本构思');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

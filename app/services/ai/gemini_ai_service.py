@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, cast
+from typing import List, Optional, Dict, cast, Any
 import google.generativeai as genai
 from flask import current_app
 import json
@@ -9,44 +9,137 @@ class GeminiAIService(BaseAIService):
     """使用 Google Gemini 的 AI 服务实现"""
 
     def __init__(self):
-        self.api_key: str = cast(str, current_app.config.get('GEMINI_API_KEY'))
+        """初始化 Gemini AI 服务"""
+        self.api_key = current_app.config.get('GEMINI_API_KEY')
+        if not self.api_key:
+            raise ValueError("Gemini API key not found")
+            
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.5-pro')
+        current_app.logger.info("Initialized Gemini AI service with model: gemini-2.5-pro")
 
-    async def _generate_content(self, prompt: str) -> Optional[str]:
-        """通用的内容生成方法"""
+    async def _generate_content(self, prompt: str, feature_name: str = "未指定功能") -> Optional[str]:
+        """生成内容的通用方法"""
+        import time
+        from datetime import datetime
+
+        start_time = time.time()
         try:
+            # 记录请求开始
+            request_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            current_app.logger.info(
+                f"\n{'='*80}\n"
+                f"AI请求开始 - {feature_name}\n"
+                f"时间: {request_time}\n"
+                f"模型: gemini-2.5-pro\n"
+                f"提示词长度: {len(prompt)} 字符\n"
+                f"提示词前200字符: {prompt[:200]}...\n"
+                f"{'='*80}"
+            )
+
+            # 生成内容
             response = self.model.generate_content(prompt)
-            return response.text if response.text else None
+            
+            # 计算用时
+            end_time = time.time()
+            duration = end_time - start_time
+            
+            # 获取响应文本
+            response_text = response.text if response and hasattr(response, 'text') else None
+            
+            # 记录响应结果
+            current_app.logger.info(
+                f"\n{'='*80}\n"
+                f"AI响应完成 - {feature_name}\n"
+                f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"用时: {duration:.2f} 秒\n"
+                f"响应长度: {len(response_text) if response_text else 0} 字符\n"
+                f"响应内容前200字符: {response_text[:200] if response_text else 'None'}...\n"
+                f"{'='*80}"
+            )
+            
+            return response_text
+            
         except Exception as e:
-            current_app.logger.error(f"Gemini AI内容生成失败: {str(e)}")
+            # 记录错误信息
+            current_app.logger.error(
+                f"\n{'='*80}\n"
+                f"AI请求失败 - {feature_name}\n"
+                f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"错误类型: {type(e).__name__}\n"
+                f"错误信息: {str(e)}\n"
+                f"提示词: {prompt}\n"
+                f"{'='*80}"
+            )
             return None
 
     async def generate_creative_ideas(self, content: str) -> Optional[List[Dict[str, str]]]:
         """基于灵感生成创意方向"""
-        system_prompt = """你是一个专业的创意顾问。你的任务是基于用户提供的灵感，生成10个不同方向的创意构思。
-        每个创意都应该包含：
-        1. 作品简述（100字以内）
-        2. 体裁（如：奇幻小说、科幻小说、现实主义小说等）
-        3. 主题（作品想要表达的核心思想）
-        4. 创新点（这个创意最与众不同的地方）
-        
+        system_prompt = """你是一个专业的创意顾问。你的任务是基于用户提供的灵感，生成5个不同方向的创意构思。
+        请以下面的JSON格式返回结果（注意：必须是可解析的JSON格式，不要添加额外的解释文字）：
+
+        [
+            {
+                "summary": "作品简述（100字以内）",
+                "genre": "体裁（如：奇幻小说、科幻小说等）",
+                "theme": "主题（作品想要表达的核心思想）",
+                "innovation": "创新点（这个创意最与众不同的地方）"
+            },
+            ...（重复5次）
+        ]
+
         要求：
-        - 每个创意方向都要具有独特性
-        - 创意之间要有足够的差异化
-        - 确保主题深度和商业价值的平衡
-        - 注意可行性，避免过于天马行空
-        - 输出格式为JSON数组，每个创意包含summary, genre, theme, innovation四个字段
+        1. 每个创意方向必须独特，彼此有显著差异
+        2. 确保主题深度和商业价值的平衡
+        3. 保持可行性，避免过于天马行空
+        4. 严格按照示例的JSON格式输出
+        5. 不要在JSON前后添加任何额外的文字说明
         """
 
-        prompt = system_prompt + f"\n\n基于以下灵感，生成10个不同的创意方向：\n{content}"
+        prompt = system_prompt + f"\n\n基于以下灵感，生成5个不同的创意方向：\n{content}"
+        response = None  # 初始化response变量
         try:
-            response = await self._generate_content(prompt)
+            response = await self._generate_content(prompt, "创意发散生成")
             if not response:
+                current_app.logger.error("Gemini AI返回空响应")
                 return None
-            return json.loads(response)
+
+            # 尝试清理响应文本，移除可能的前后缀
+            cleaned_response = response.strip()
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]
+            cleaned_response = cleaned_response.strip()
+
+            current_app.logger.info(f"清理后的JSON响应: {cleaned_response[:200]}...")
+            
+            result = json.loads(cleaned_response)
+            if not isinstance(result, list):
+                raise ValueError("响应不是JSON数组格式")
+            
+            # 验证和转换结果格式
+            validated_result: List[Dict[str, str]] = []
+            for item in result:
+                if not isinstance(item, dict):
+                    continue
+                item_dict = cast(Dict[Any, Any], item)
+                validated_item = {
+                    'summary': str(item_dict.get('summary', '')),
+                    'genre': str(item_dict.get('genre', '')),
+                    'theme': str(item_dict.get('theme', '')),
+                    'innovation': str(item_dict.get('innovation', ''))
+                }
+                validated_result.append(validated_item)
+            
+            return validated_result
+            
         except json.JSONDecodeError as e:
             current_app.logger.error(f"Gemini AI创意生成JSON解析失败: {str(e)}")
+            current_app.logger.error(f"原始响应: {response[:200] if response else 'None'}")
+            return None
+        except Exception as e:
+            current_app.logger.error(f"Gemini AI创意生成过程出错: {str(e)}")
             return None
 
     async def enhance_basic_concept(self, content: str) -> Optional[str]:
@@ -66,7 +159,7 @@ class GeminiAIService(BaseAIService):
         """
 
         prompt = system_prompt + f"\n\n基于以下创意构思，提供完整的基本构思方案：\n{content}"
-        return await self._generate_content(prompt)
+        return await self._generate_content(prompt, "基本构思完善")
 
     async def generate_outline(self, content: str) -> Optional[str]:
         """生成全文大纲"""
@@ -89,7 +182,7 @@ class GeminiAIService(BaseAIService):
         """
 
         prompt = system_prompt + f"\n\n基于以下基本构思，生成全文大纲：\n{content}"
-        return await self._generate_content(prompt)
+        return await self._generate_content(prompt, "全文大纲生成")
 
     async def generate_chapter_outline(self, outline: str, chapter_number: int) -> Optional[List[str]]:
         """生成章节大纲"""
@@ -118,7 +211,7 @@ class GeminiAIService(BaseAIService):
         """
 
         prompt = system_prompt + f"\n\n基于以下全文大纲，请详细规划第{chapter_number}章：\n{outline}"
-        content = await self._generate_content(prompt)
+        content = await self._generate_content(prompt, f"第{chapter_number}章大纲生成")
         return content.split('\n') if content else None
 
     async def generate_section_outline(self, chapter_outline: str, section_number: int) -> Optional[str]:
@@ -150,7 +243,7 @@ class GeminiAIService(BaseAIService):
         """
 
         prompt = system_prompt + f"\n\n基于以下章节大纲，请详细规划第{section_number}节：\n{chapter_outline}"
-        return await self._generate_content(prompt)
+        return await self._generate_content(prompt, f"第{section_number}节大纲生成")
 
     async def generate_section_summary(self, section_outline: str) -> Optional[str]:
         """生成段落概要"""
@@ -169,7 +262,7 @@ class GeminiAIService(BaseAIService):
         """
 
         prompt = system_prompt + f"\n\n基于以下段落大纲，生成段落概要：\n{section_outline}"
-        return await self._generate_content(prompt)
+        return await self._generate_content(prompt, "段落概要生成")
 
     async def generate_section_content(self, section_summary: str) -> Optional[str]:
         """生成段落正文"""
@@ -196,4 +289,4 @@ class GeminiAIService(BaseAIService):
         """
 
         prompt = system_prompt + f"\n\n基于以下段落概要，创作段落正文：\n{section_summary}"
-        return await self._generate_content(prompt)
+        return await self._generate_content(prompt, "段落正文创作")
