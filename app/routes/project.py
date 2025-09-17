@@ -47,31 +47,36 @@ def new_project():
         
         db.session.commit()
         return redirect(url_for('project.view', project_id=project.id))
-    return render_template('project/new.html')
+    # 获取所有项目用于侧边栏显示
+    projects = Project.query.all()
+    return render_template('project/new.html', projects=projects)
 
 @bp.route('/<int:project_id>')
 def view(project_id):
     project = Project.query.get_or_404(project_id)
-    return render_template('project/view.html', project=project)
+    projects = Project.query.all()  # 获取所有项目用于侧边栏显示
+    return render_template('project/view.html', project=project, projects=projects)
 
 @bp.route('/<int:project_id>/settings', methods=['GET', 'POST'])
 def settings(project_id):
     project = Project.query.get_or_404(project_id)
     if request.method == 'POST':
+        data = request.get_json()
         setting = Setting.query.filter_by(
             project_id=project_id,
-            setting_type=request.form['type']
+            setting_type=data['type']
         ).first()
         
         if not setting:
             setting = Setting(
                 project_id=project_id,
-                setting_type=request.form['type']
+                setting_type=data['type']
             )
             
-        setting.content = request.form['content']
+        setting.content = data['content']
         db.session.add(setting)
         db.session.commit()
         return jsonify({'status': 'success'})
-        
-    return render_template('project/settings.html', project=project)
+    
+    projects = Project.query.all()  # 获取所有项目用于侧边栏显示
+    return render_template('project/settings.html', project=project, projects=projects)

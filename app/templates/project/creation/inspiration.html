@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <h2>灵感收集 - {{ project.title }}</h2>
+    
+    <!-- 添加新灵感的表单 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">记录新灵感</h5>
+            <form method="POST" enctype="multipart/form-data" id="inspirationForm">
+                <div class="form-group">
+                    <label for="content">灵感内容</label>
+                    <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="source_type">来源类型</label>
+                    <input type="text" class="form-control" id="source_type" name="source_type">
+                </div>
+                <div class="form-group">
+                    <label for="tags">标签</label>
+                    <input type="text" class="form-control" id="tags" name="tags" placeholder="用逗号分隔">
+                </div>
+                <div class="form-group">
+                    <label for="materials">相关素材</label>
+                    <input type="file" class="form-control-file" id="materials" name="materials" multiple>
+                </div>
+                <div class="form-group">
+                    <label for="material_description">素材描述</label>
+                    <textarea class="form-control" id="material_description" name="material_description" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">保存灵感</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 灵感列表 -->
+    <div class="inspirations-list">
+        {% for inspiration in inspirations %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">灵感 #{{ inspiration.id }}</h5>
+                <p class="card-text">{{ inspiration.content }}</p>
+                {% if inspiration.source_type %}
+                <p class="text-muted">来源: {{ inspiration.source_type }}</p>
+                {% endif %}
+                {% if inspiration.tags %}
+                <p class="tags">
+                    {% for tag in inspiration.tags.split(',') %}
+                    <span class="badge badge-info">{{ tag.strip() }}</span>
+                    {% endfor %}
+                </p>
+                {% endif %}
+                
+                {% if inspiration.materials %}
+                <div class="materials-section">
+                    <h6>相关素材:</h6>
+                    <div class="row">
+                    {% for material in inspiration.materials %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card">
+                                {% if material.file_type.startswith('image/') %}
+                                <img src="{{ url_for('creation.get_inspiration_material', 
+                                         project_id=project.id, 
+                                         inspiration_id=inspiration.id,
+                                         filename=material.file_path) }}" 
+                                     class="card-img-top" alt="素材图片">
+                                {% else %}
+                                <div class="card-body">
+                                    <a href="{{ url_for('creation.get_inspiration_material',
+                                              project_id=project.id,
+                                              inspiration_id=inspiration.id,
+                                              filename=material.file_path) }}" 
+                                       target="_blank">
+                                        查看素材
+                                    </a>
+                                </div>
+                                {% endif %}
+                                {% if material.description %}
+                                <div class="card-footer">
+                                    <small class="text-muted">{{ material.description }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="card-footer text-muted">
+                    创建于: {{ inspiration.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#inspirationForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+        
+        $.ajax({
+            url: "{{ url_for('creation.inspiration', project_id=project.id) }}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.status === 'success') {
+                    location.reload();  // 刷新页面以显示新添加的灵感
+                }
+            },
+            error: function() {
+                alert('保存灵感时出错');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

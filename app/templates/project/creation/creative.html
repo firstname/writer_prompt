@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="content-section">
+    <h2>创意构思 - {{ project.title }}</h2>
+    
+    <!-- 添加新创意的表单 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">记录新创意</h5>
+            <form method="POST" id="creativeForm">
+                <div class="form-group">
+                    <label for="inspiration_id">选择灵感</label>
+                    <select class="form-control" id="inspiration_id" name="inspiration_id">
+                        <option value="">请选择灵感</option>
+                        {% for inspiration in inspirations %}
+                        <option value="{{ inspiration.id }}">{{ inspiration.content[:50] }}...</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" id="generateIdeas" class="btn btn-info mt-2">基于灵感生成创意</button>
+                </div>
+                <div class="form-group">
+                    <label for="summary">创意概述</label>
+                    <textarea class="form-control" id="summary" name="summary" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="genre">文体类型</label>
+                    <input type="text" class="form-control" id="genre" name="genre">
+                </div>
+                <div class="form-group">
+                    <label for="theme">主题</label>
+                    <input type="text" class="form-control" id="theme" name="theme">
+                </div>
+                <div class="form-group">
+                    <label for="innovation_points">创新点</label>
+                    <textarea class="form-control" id="innovation_points" name="innovation_points" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="score">评分 (0-5)</label>
+                    <input type="number" class="form-control" id="score" name="score" min="0" max="5" step="0.5" value="0">
+                </div>
+                <button type="submit" class="btn btn-primary">保存创意</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 创意列表 -->
+    <div class="ideas-list">
+        {% for idea in ideas %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">创意 #{{ idea.id }}</h5>
+                <p class="card-text">{{ idea.summary }}</p>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>文体类型:</strong> {{ idea.genre or '未指定' }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>主题:</strong> {{ idea.theme or '未指定' }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>评分:</strong> {{ idea.score }}
+                    </div>
+                </div>
+                
+                {% if idea.innovation_points %}
+                <div class="mt-3">
+                    <h6>创新点:</h6>
+                    <p>{{ idea.innovation_points }}</p>
+                </div>
+                {% endif %}
+                
+                {% if idea.inspiration %}
+                <div class="mt-3">
+                    <h6>关联灵感:</h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            {{ idea.inspiration.content }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="card-footer text-muted">
+                    创建于: {{ idea.created_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/creative.js') }}"></script>
+<script>
+$(document).ready(function() {
+    $('#creativeForm').on('submit', function(e) {
+        e.preventDefault();
+        var formData = $(this).serialize();
+        
+        $.ajax({
+            url: "{{ url_for('creation.creative', project_id=project.id) }}",
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 'success') {
+                    location.reload();  // 刷新页面以显示新添加的创意
+                }
+            },
+            error: function() {
+                alert('保存创意时出错');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}项目设置 - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+    <h1>{{ project.name }} - 项目设置</h1>
+
+    <div class="settings-container">
+        {% set settings = project.settings %}
+        {% if settings %}
+            {% for setting in settings %}
+            <div class="setting-item">
+                <h3>{{ setting.setting_type }}</h3>
+                <textarea class="setting-content" 
+                          data-type="{{ setting.setting_type }}"
+                          data-project-id="{{ project.id }}">{{ setting.content }}</textarea>
+                <button class="save-setting" onclick="saveSetting(this)">保存</button>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>暂无设置，请先添加设置项</p>
+        {% endif %}
+
+        <div class="setting-actions">
+            <button onclick="addNewSetting()">添加新设置</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block helper_content %}
+<div class="helper-content">
+    <h3>设置指南</h3>
+    <div class="helper-info">
+        <p>在这里管理你的项目设置：</p>
+        <ul>
+            <li>世界观设定：描述故事发生的世界背景</li>
+            <li>人物设定：定义主要人物的特征和背景</li>
+            <li>故事背景：阐述故事的基本框架</li>
+        </ul>
+        <p>提示：</p>
+        <ul>
+            <li>定期更新设定以保持内容的一致性</li>
+            <li>设定可以随着故事发展而调整</li>
+            <li>添加新设定时请选择合适的类型</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveSetting(button) {
+    const textarea = button.previousElementSibling;
+    const projectId = textarea.dataset.projectId;
+    const settingType = textarea.dataset.type;
+    const content = textarea.value;
+
+    fetch(`/project/${projectId}/settings`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            type: settingType,
+            content: content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // 显示成功提示
+            button.textContent = '已保存';
+            setTimeout(() => {
+                button.textContent = '保存';
+            }, 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        button.textContent = '保存失败';
+    });
+}
+
+function addNewSetting() {
+    // TODO: 实现添加新设置的功能
+}
+</script>
+{% endblock %}

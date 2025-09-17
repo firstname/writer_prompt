@@ -25,12 +25,21 @@
                                 <div class="module-item">
                                     <a href="{{ url_for('content.new_content', project_id=project.id) }}">正文生成</a>
                                 </div>
+                                <div class="module-item">
+                                    <a href="{{ url_for('creation.inspiration', project_id=project.id) }}">灵感收集</a>
+                                </div>
+                                <div class="module-item">
+                                    <a href="{{ url_for('creation.creative', project_id=project.id) }}">创意构思</a>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p>暂无项目，<a href="{{ url_for('project.new_project') }}">创建新项目</a></p>
+                    <p>暂无项目</p>
                 {% endif %}
+            </div>
+            <div class="create-project-button">
+                <a href="{{ url_for('project.new_project') }}" class="new-project-link">创建新项目</a>
             </div>
         </div>
 

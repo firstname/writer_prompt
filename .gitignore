@@ -44,6 +44,9 @@ instance/
 
 # Unit test / coverage reports
 htmlcov/
+
+# Upload files
+uploads/
 .tox/
 .nox/
 .coverage
