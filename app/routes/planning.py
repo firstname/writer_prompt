@@ -32,7 +32,12 @@ async def initial_idea(project_id: int):
         })
     
     # GET 请求展示表单和列表
+    # 获取所有灵感并检查是否有创意发散
     initial_ideas = InitialIdea.query.filter_by(project_id=project_id).order_by(InitialIdea.created_at.desc()).all()
+    for idea in initial_ideas:
+        # 检查是否有对应的创意发散
+        idea.has_expansions = CreativeExpansion.query.filter_by(initial_idea_id=idea.id).first() is not None
+    
     # 获取所有项目列表用于侧边栏
     projects = Project.query.all()
     return render_template('project/planning/initial_idea.html',
