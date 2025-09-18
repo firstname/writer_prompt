@@ -2,12 +2,12 @@
 
 {% block content %}
 <div class="content-section">
-    <h2>作品基本构思 - {{ project.title }}</h2>
+    <h2>全文构思 - {{ project.title }}</h2>
     
-    <!-- 选定创意展示 -->
+    <!-- 创意概述 -->
     <div class="card mb-4">
-        <div class="card-header">
-            选定创意
+        <div class="card-header bg-primary text-white">
+            创意概述
         </div>
         <div class="card-body">
             <h5 class="card-title">{{ expansion.summary }}</h5>
@@ -19,209 +19,183 @@
                     <strong>主题:</strong> {{ expansion.theme }}
                 </div>
             </div>
-            <div class="card-text">
+            <div class="card-text mb-3">
                 <strong>创新点:</strong><br>
                 {{ expansion.innovation_points }}
             </div>
         </div>
     </div>
-    
-    <!-- 生成构思按钮 -->
-    {% if not concept %}
-    <div class="text-center mb-4">
-        <button id="generateConcept" class="btn btn-lg btn-primary">
-            生成基本构思
-        </button>
-    </div>
-    {% endif %}
-    
-    <!-- 基本构思展示 -->
-    {% if concept %}
+
+    <!-- 世界观构建 -->
     <div class="card mb-4">
         <div class="card-header">
-            作品基本构思
-            <small class="text-muted float-right">
-                生成于: {{ concept.created_at.strftime('%Y-%m-%d %H:%M') }}
-            </small>
+            <h3 class="h5 mb-0">世界观构建</h3>
         </div>
         <div class="card-body">
-            <!-- 世界观设定 -->
             <div class="mb-4">
-                <h5>世界设定</h5>
+                <h6 class="font-weight-bold">时代背景与社会环境</h6>
                 <p>{{ concept.world_setting }}</p>
             </div>
-
             <div class="mb-4">
-                <h5>文化背景</h5>
+                <h6 class="font-weight-bold">文化背景与社会制度</h6>
                 <p>{{ concept.culture_background }}</p>
             </div>
-
             <div class="mb-4">
-                <h5>特殊元素</h5>
+                <h6 class="font-weight-bold">特殊元素设定</h6>
                 <p>{{ concept.special_elements }}</p>
-            </div>
-
-            <!-- 故事架构 -->
-            <div class="mb-4">
-                <h5>核心冲突</h5>
-                <p>{{ concept.core_conflict }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>故事大纲</h5>
-                <p>{{ concept.plot_outline }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>子情节设计</h5>
-                <p>{{ concept.subplot_design }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>关键事件</h5>
-                <p>{{ concept.key_events }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>情节推进</h5>
-                <p>{{ concept.plot_progression }}</p>
-            </div>
-
-            <!-- 人物系统 -->
-            <div class="mb-4">
-                <h5>主要人物</h5>
-                <p>{{ concept.main_characters }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>重要配角</h5>
-                <p>{{ concept.supporting_characters }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>人物关系</h5>
-                <p>{{ concept.character_relationships }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>人物成长</h5>
-                <p>{{ concept.character_arcs }}</p>
-            </div>
-
-            <!-- 主题与深度 -->
-            <div class="mb-4">
-                <h5>主题设计</h5>
-                <p>{{ concept.theme_design }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>哲学元素</h5>
-                <p>{{ concept.philosophical_elements }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>社会评论</h5>
-                <p>{{ concept.social_commentary }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>象征系统</h5>
-                <p>{{ concept.symbolic_system }}</p>
-            </div>
-
-            <!-- 叙事策略 -->
-            <div class="mb-4">
-                <h5>叙事视角</h5>
-                <p>{{ concept.narrative_perspective }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>时间线结构</h5>
-                <p>{{ concept.timeline_structure }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>节奏设计</h5>
-                <p>{{ concept.pacing_design }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>伏笔设置</h5>
-                <p>{{ concept.foreshadowing }}</p>
-            </div>
-
-            <!-- 写作风格 -->
-            <div class="mb-4">
-                <h5>写作风格</h5>
-                <p>{{ concept.writing_style }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>语言特色</h5>
-                <p>{{ concept.language_features }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>氛围营造</h5>
-                <p>{{ concept.atmosphere_building }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>文学手法</h5>
-                <p>{{ concept.literary_devices }}</p>
-            </div>
-
-            <!-- 规划信息 -->
-            <div class="mb-4">
-                <h5>章节结构</h5>
-                <p>{{ concept.chapter_structure }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>分卷规划</h5>
-                <p>{{ concept.volume_planning }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>预计字数</h5>
-                <p>{{ concept.word_count_target }}</p>
-            </div>
-
-            <div class="mb-4">
-                <h5>预计章节数</h5>
-                <p>{{ concept.estimated_chapters }}</p>
             </div>
         </div>
     </div>
-    {% endif %}
+
+    <!-- 故事架构 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">故事架构</h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="font-weight-bold">核心冲突</h6>
+                <p>{{ concept.core_conflict }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">故事大纲</h6>
+                <p>{{ concept.plot_outline }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">子情节设计</h6>
+                <p>{{ concept.subplot_design }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">关键事件</h6>
+                <p>{{ concept.key_events }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">情节推进方式</h6>
+                <p>{{ concept.plot_progression }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 人物系统 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">人物系统</h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="font-weight-bold">主要人物</h6>
+                <p>{{ concept.main_characters }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">重要配角</h6>
+                <p>{{ concept.supporting_characters }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">人物关系网</h6>
+                <p>{{ concept.character_relationships }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">人物成长线</h6>
+                <p>{{ concept.character_arcs }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主题与深度 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">主题与深度</h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="font-weight-bold">主题设计</h6>
+                <p>{{ concept.theme_design }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">哲学元素</h6>
+                <p>{{ concept.philosophical_elements }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">社会评论</h6>
+                <p>{{ concept.social_commentary }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">象征系统</h6>
+                <p>{{ concept.symbolic_system }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 叙事策略 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">叙事策略</h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="font-weight-bold">叙事视角</h6>
+                <p>{{ concept.narrative_perspective }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">时间线结构</h6>
+                <p>{{ concept.timeline_structure }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">节奏设计</h6>
+                <p>{{ concept.pacing_design }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">伏笔设置</h6>
+                <p>{{ concept.foreshadowing }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 风格与技巧 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">风格与技巧</h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="font-weight-bold">写作风格</h6>
+                <p>{{ concept.writing_style }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">语言特色</h6>
+                <p>{{ concept.language_features }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">氛围营造</h6>
+                <p>{{ concept.atmosphere_building }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">文学手法</h6>
+                <p>{{ concept.literary_devices }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结构规划 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="h5 mb-0">结构规划</h3>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="font-weight-bold">章节结构</h6>
+                <p>{{ concept.chapter_structure }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">分卷规划</h6>
+                <p>{{ concept.volume_planning }}</p>
+            </div>
+            <div class="mb-4">
+                <h6 class="font-weight-bold">规模预估</h6>
+                <p>目标字数：约{{ concept.word_count_target }}字</p>
+                <p>预计章节数：约{{ concept.estimated_chapters }}章</p>
+            </div>
+        </div>
+    </div>
 </div>
-
-{% block scripts %}
-<script>
-$(document).ready(function() {
-    // 生成基本构思
-    $('#generateConcept').on('click', function() {
-        $(this).prop('disabled', true).html(
-            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...'
-        );
-        
-        $.ajax({
-            url: "{{ url_for('project_planning.basic_concept', 
-                            project_id=project.id, 
-                            expansion_id=expansion.id) }}",
-            method: 'POST',
-            success: function(response) {
-                location.reload();
-            },
-            error: function(xhr) {
-                alert('生成失败: ' + xhr.responseJSON.error);
-                $('#generateConcept').prop('disabled', false)
-                    .html('生成基本构思');
-            }
-        });
-    });
-});
-</script>
-{% endblock %}
-
 {% endblock %}

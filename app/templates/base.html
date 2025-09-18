@@ -32,7 +32,15 @@
                                     <a href="{{ url_for('content.new_content', project_id=project.id) }}">正文生成</a>
                                 </div>
                                 <div class="module-item">
-                                    <a href="{{ url_for('planning.initial_idea', project_id=project.id) }}">作品规划</a>
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="planningDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            作品规划
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="planningDropdown">
+                                            <li><a class="dropdown-item" href="{{ url_for('project_planning.initial_idea', project_id=project.id) }}">初始灵感</a></li>
+                                            <li><a class="dropdown-item" href="{{ url_for('project_planning.view_concepts', project_id=project.id) }}">全文构思</a></li>
+                                        </ul>
+                                    </li>
                                 </div>
                             </div>
                         </div>

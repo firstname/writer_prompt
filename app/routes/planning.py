@@ -3,8 +3,28 @@ from typing import List, Optional
 from app.models import Project
 from app.models.planning import InitialIdea, CreativeExpansion, BasicConcept
 from app.controllers.planning_controller import PlanningController
+from sqlalchemy import desc
 
-bp = Blueprint('planning', __name__, url_prefix='/project/<int:project_id>/planning')
+bp = Blueprint('project_planning', __name__, url_prefix='/project/<int:project_id>/planning')
+
+@bp.route('/concepts')
+def view_concepts(project_id: int):
+    """查看项目的所有全文构思"""
+    # 获取项目信息
+    project = Project.query.get_or_404(project_id)
+    
+    # 获取所有构思，按创建时间倒序排列
+    concepts = BasicConcept.query.filter_by(project_id=project_id).order_by(desc(BasicConcept.created_at)).all()
+    
+    # 获取每个构思对应的创意发散信息
+    for concept in concepts:
+        concept.expansion = CreativeExpansion.query.get(concept.creative_expansion_id)
+    
+    return render_template(
+        'planning/concepts.html',
+        project=project,
+        concepts=concepts
+    )
 
 @bp.route('/initial-idea', methods=['GET', 'POST'])
 async def initial_idea(project_id: int):
@@ -55,17 +75,22 @@ async def creative_expansions(project_id: int, idea_id: int):
         current_app.logger.info(f'Received POST request for creative expansions. Idea ID: {idea_id}')
         try:
             controller = PlanningController()
-            # 检查是否已经有生成的创意
+            # 获取已存在的创意
             existing_expansions = CreativeExpansion.query.filter_by(
                 initial_idea_id=idea_id
-            ).first()
+            ).order_by(desc(CreativeExpansion.created_at)).all()
             
-            if existing_expansions:
-                current_app.logger.info(f'Found existing expansions for idea {idea_id}')
-                return jsonify({
-                    'status': 'success',
-                    'message': '创意已存在'
-                })
+            # 生成新的创意
+            new_expansions = await controller.generate_creative_expansions(idea_id)
+            if not new_expansions:
+                return jsonify({'error': '生成创意发散失败，请重试'}), 500
+                
+            # 返回成功响应
+            return jsonify({
+                'status': 'success',
+                'count': len(new_expansions),
+                'new_expansions': [expansion.to_dict() for expansion in new_expansions]
+            })
             
             # 生成新的创意
             expansions = await controller.generate_creative_expansions(idea_id)

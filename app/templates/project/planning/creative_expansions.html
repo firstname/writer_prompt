@@ -22,6 +22,11 @@
                     }[initial_idea.source_type] }}
                 </small>
             </p>
+            <div class="text-right">
+                <button id="generateMoreExpansions" class="btn btn-outline-primary">
+                    生成更多创意
+                </button>
+            </div>
         </div>
     </div>
     
@@ -59,18 +64,19 @@
                     {{ expansion.innovation_points }}
                 </div>
                 
-                {% if not expansion.is_selected %}
-                <button class="btn btn-success select-expansion" 
-                        data-expansion-id="{{ expansion.id }}">
-                    选择此创意
-                </button>
+                {% if expansion.has_concept %}
+                    <a href="{{ url_for('project_planning.basic_concept', project_id=project.id, expansion_id=expansion.id) }}" 
+                       class="btn btn-info">查看全文构思</a>
+                {% elif expansion.is_selected %}
+                    <button class="btn btn-primary generate-concept" 
+                            data-expansion-id="{{ expansion.id }}">
+                        生成全文构思
+                    </button>
                 {% else %}
-                <a href="{{ url_for('planning.basic_concept', 
-                                   project_id=project.id, 
-                                   expansion_id=expansion.id) }}" 
-                   class="btn btn-primary">
-                    生成基本构思
-                </a>
+                    <button class="btn btn-success select-expansion" 
+                            data-expansion-id="{{ expansion.id }}">
+                        选择此创意
+                    </button>
                 {% endif %}
             </div>
         </div>
@@ -81,50 +87,145 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
+    // 绑定选择创意按钮事件
+    function bindSelectExpansion() {
+        $('.select-expansion').off('click').on('click', function() {
+            var $btn = $(this);
+            var expansionId = $btn.data('expansion-id');
+            
+            $btn.prop('disabled', true).html(
+                '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 选择中...'
+            );
+            
+            $.ajax({
+                url: "{{ url_for('project_planning.select_expansion', project_id=project.id, expansion_id=0) }}".replace('/0', '/' + expansionId),
+                method: 'POST',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // 更新按钮状态和样式
+                        var $card = $btn.closest('.card');
+                        $card.addClass('border-success');
+                        $card.find('.card-header').addClass('bg-success text-white').append(
+                            '<span class="badge badge-light float-right">已选择</span>'
+                        );
+                        $btn.replaceWith(`
+                            <button class="btn btn-primary generate-concept" 
+                                    data-expansion-id="${expansionId}">
+                                生成全文构思
+                            </button>
+                        `);
+                        // 绑定新的生成全文构思按钮事件
+                        bindGenerateConcept();
+                    } else {
+                        alert('选择失败：' + response.error);
+                        $btn.prop('disabled', false).text('选择此创意');
+                    }
+                },
+                error: function(xhr) {
+                    alert('选择失败: ' + (xhr.responseJSON?.error || '未知错误'));
+                    $btn.prop('disabled', false).text('选择此创意');
+                }
+            });
+        });
+    }
+    
+    // 绑定生成全文构思按钮事件
+    function bindGenerateConcept() {
+        $('.generate-concept').off('click').on('click', function() {
+            var $btn = $(this);
+            var expansionId = $btn.data('expansion-id');
+            
+            $btn.prop('disabled', true).html(
+                '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 构思生成中...'
+            );
+            
+            $.ajax({
+                url: "{{ url_for('project_planning.basic_concept', project_id=project.id, expansion_id=0) }}".replace('/0', '/' + expansionId),
+                method: 'POST',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        window.location.href = "{{ url_for('project_planning.basic_concept', project_id=project.id, expansion_id=0) }}".replace('/0', '/' + expansionId);
+                    } else {
+                        alert('生成失败: ' + response.error);
+                        $btn.prop('disabled', false).text('生成全文构思');
+                    }
+                },
+                error: function(xhr) {
+                    alert('生成失败: ' + (xhr.responseJSON?.error || '未知错误'));
+                    $btn.prop('disabled', false).text('生成全文构思');
+                }
+            });
+        });
+    }
+    
+    // 初始绑定事件
+    bindSelectExpansion();
+    bindGenerateConcept();
+    
     // 生成创意发散
-    $('#generateExpansions').on('click', function() {
-        $(this).prop('disabled', true).html(
+    $('#generateExpansions, #generateMoreExpansions').on('click', function() {
+        var $btn = $(this);
+        var originalText = $btn.is('#generateMoreExpansions') ? '生成更多创意' : '生成创意发散';
+        $btn.prop('disabled', true).html(
             '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 生成中...'
         );
         
         $.ajax({
-            url: "{{ url_for('planning.creative_expansions', 
-                            project_id=project.id, 
-                            idea_id=initial_idea.id) }}",
+            url: "{{ url_for('project_planning.creative_expansions', project_id=project.id, idea_id=initial_idea.id) }}",
             method: 'POST',
             success: function(response) {
-                location.reload();
+                if (response.status === 'success') {
+                    // 如果是"生成更多创意"，动态插入新创意卡片
+                    if (response.new_expansions && response.new_expansions.length > 0) {
+                        var $expansionsList = $('#expansionsList');
+                        response.new_expansions.forEach(function(expansion, index) {
+                            var nextIndex = $expansionsList.children().length + index + 1;
+                            var cardHtml = `
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        创意 #${nextIndex}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">${expansion.summary}</h5>
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <strong>体裁:</strong> ${expansion.genre}
+                                            </div>
+                                            <div class="col-md-8">
+                                                <strong>主题:</strong> ${expansion.theme}
+                                            </div>
+                                        </div>
+                                        <div class="card-text mb-3">
+                                            <strong>创新点:</strong><br>
+                                            ${expansion.innovation_points}
+                                        </div>
+                                        <button class="btn btn-success select-expansion" 
+                                                data-expansion-id="${expansion.id}">
+                                            选择此创意
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            $expansionsList.prepend(cardHtml);
+                        });
+                        
+                        // 重新绑定选择按钮事件
+                        bindSelectExpansion();
+                    } else if ($('#expansionsList').children().length === 0) {
+                        // 如果是第一次生成，刷新页面
+                        location.reload();
+                    }
+                } else {
+                    alert('生成失败：' + response.error);
+                }
             },
             error: function(xhr) {
-                alert('生成失败: ' + xhr.responseJSON.error);
-                $('#generateExpansions').prop('disabled', false)
-                    .html('生成创意发散');
+                alert('生成失败: ' + (xhr.responseJSON?.error || '未知错误'));
+                $btn.prop('disabled', false).text(originalText);
             }
         });
     });
     
-    // 选择创意
-    $('.select-expansion').on('click', function() {
-        var $btn = $(this);
-        var expansionId = $btn.data('expansion-id');
-        
-        $btn.prop('disabled', true).html(
-            '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 选择中...'
-        );
-        
-        $.ajax({
-            url: "        $.ajax({
-            url: "{{ url_for('planning.select_expansion', project_id=project.id, expansion_id=0) }}".replace('/0', '/' + expansionId),
-            method: 'POST',
-            success: function(response) {
-                location.reload();
-            },
-            error: function(xhr) {
-                alert('选择失败: ' + xhr.responseJSON.error);
-                $btn.prop('disabled', false).html('选择此创意');
-            }
-        });
-    });
 });
 </script>
 {% endblock %}

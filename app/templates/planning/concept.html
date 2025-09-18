@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-center mb-4">作品全文构思</h1>
+
+    <!-- 世界观设定 -->
+    <div class="card mb-4">
+        <h5 class="card-header">世界观设定</h5>
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2">时代背景与社会环境</h6>
+            <p class="card-text">{{ concept.world_setting|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">文化背景</h6>
+            <p class="card-text">{{ concept.culture_background|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">特殊元素</h6>
+            <p class="card-text">{{ concept.special_elements|nl2br }}</p>
+        </div>
+    </div>
+
+    <!-- 故事架构 -->
+    <div class="card mb-4">
+        <h5 class="card-header">故事架构</h5>
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2">核心冲突</h6>
+            <p class="card-text">{{ concept.core_conflict|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">故事大纲</h6>
+            <p class="card-text">{{ concept.plot_outline|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">子情节设计</h6>
+            <p class="card-text">{{ concept.subplot_design|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">关键事件</h6>
+            <p class="card-text">{{ concept.key_events|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">情节推进</h6>
+            <p class="card-text">{{ concept.plot_progression|nl2br }}</p>
+        </div>
+    </div>
+
+    <!-- 人物系统 -->
+    <div class="card mb-4">
+        <h5 class="card-header">人物系统</h5>
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2">主要人物</h6>
+            <p class="card-text">{{ concept.main_characters|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">配角设定</h6>
+            <p class="card-text">{{ concept.supporting_characters|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">人物关系网</h6>
+            <p class="card-text">{{ concept.character_relationships|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">人物成长线</h6>
+            <p class="card-text">{{ concept.character_arcs|nl2br }}</p>
+        </div>
+    </div>
+
+    <!-- 主题深度 -->
+    <div class="card mb-4">
+        <h5 class="card-header">主题深度</h5>
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2">主题设计</h6>
+            <p class="card-text">{{ concept.theme_design|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">哲学元素</h6>
+            <p class="card-text">{{ concept.philosophical_elements|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">社会评论</h6>
+            <p class="card-text">{{ concept.social_commentary|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">象征系统</h6>
+            <p class="card-text">{{ concept.symbolic_system|nl2br }}</p>
+        </div>
+    </div>
+
+    <!-- 叙事策略 -->
+    <div class="card mb-4">
+        <h5 class="card-header">叙事策略</h5>
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2">叙事视角</h6>
+            <p class="card-text">{{ concept.narrative_perspective|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">时间线结构</h6>
+            <p class="card-text">{{ concept.timeline_structure|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">节奏设计</h6>
+            <p class="card-text">{{ concept.pacing_design|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">伏笔设置</h6>
+            <p class="card-text">{{ concept.foreshadowing|nl2br }}</p>
+        </div>
+    </div>
+
+    <!-- 写作风格 -->
+    <div class="card mb-4">
+        <h5 class="card-header">写作风格</h5>
+        <div class="card-body">
+            <h6 class="card-subtitle mb-2">整体风格</h6>
+            <p class="card-text">{{ concept.writing_style|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">语言特色</h6>
+            <p class="card-text">{{ concept.language_features|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">氛围营造</h6>
+            <p class="card-text">{{ concept.atmosphere_building|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">文学手法</h6>
+            <p class="card-text">{{ concept.literary_devices|nl2br }}</p>
+        </div>
+    </div>
+
+    <!-- 规划信息 -->
+    <div class="card mb-4">
+        <h5 class="card-header">规划信息</h5>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="card-subtitle mb-2">预计字数</h6>
+                    <p class="card-text">{{ concept.word_count_target }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="card-subtitle mb-2">预计章节数</h6>
+                    <p class="card-text">{{ concept.estimated_chapters }}</p>
+                </div>
+            </div>
+
+            <h6 class="card-subtitle mb-2 mt-3">章节结构</h6>
+            <p class="card-text">{{ concept.chapter_structure|nl2br }}</p>
+
+            <h6 class="card-subtitle mb-2 mt-3">分卷规划</h6>
+            <p class="card-text">{{ concept.volume_planning|nl2br }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 添加复制按钮到每个段落
+    $('.card-text').each(function() {
+        var $text = $(this);
+        var $copyBtn = $('<button class="btn btn-sm btn-outline-secondary ms-2 copy-btn">复制</button>');
+        
+        $copyBtn.click(function(e) {
+            e.preventDefault();
+            var text = $text.text().trim();
+            
+            // 创建临时文本区域
+            var $temp = $('<textarea>');
+            $('body').append($temp);
+            $temp.val(text).select();
+            
+            // 复制文本
+            document.execCommand('copy');
+            $temp.remove();
+            
+            // 显示成功提示
+            var $btn = $(this);
+            $btn.text('已复制');
+            setTimeout(function() {
+                $btn.text('复制');
+            }, 2000);
+        });
+        
+        $text.after($copyBtn);
+    });
+});
+</script>
+{% endblock %}

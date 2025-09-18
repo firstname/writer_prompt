@@ -1,22 +1,142 @@
-from typing import List, Optional, Dict, cast, Any
-import google.generativeai as genai
+from typing import Any, Dict, List, Optional, TypeVar, Union, cast
+import google.generativeai as genai  # type: ignore
 from flask import current_app
 import json
+from typing_extensions import TypeAlias
 
 from app.services.ai.base_ai_service import BaseAIService
 
-class GeminiAIService(BaseAIService):
-    """使用 Google Gemini 的 AI 服务实现"""
+T = TypeVar('T')
+JSONValue: TypeAlias = Union[str, int, float, bool, None, Dict[str, Any], List[Any]]
+JSONObject: TypeAlias = Dict[str, JSONValue]
+JSONList: TypeAlias = List[JSONObject]
 
-    def __init__(self):
+class GeminiAIService(BaseAIService):
+    api_key: Optional[str]
+    model: Any  # Using Any since we can't properly type hint the GenerativeModel
+    
+    def __init__(self) -> None:
         """初始化 Gemini AI 服务"""
-        self.api_key = current_app.config.get('GEMINI_API_KEY')
-        if not self.api_key:
-            raise ValueError("Gemini API key not found")
+        # 从配置中获取API密钥
+        api_key = current_app.config.get('GEMINI_API_KEY', '')  # type: ignore
+        if not api_key:
+            raise ValueError("Gemini API key not found in configuration")
+        
+        try:
+            # 初始化Google AI配置和模型
+            genai.configure(api_key=api_key)  # type: ignore
+            self.model = genai.GenerativeModel('gemini-2.5-pro')  # type: ignore
+            self.api_key = api_key
+            current_app.logger.info("Initialized Gemini AI service with model: gemini-2.5-pro")
+        except Exception as e:
+            current_app.logger.error(f"Failed to initialize Gemini AI service: {str(e)}")
+            raise
+
+    def _validate_concept_data(self, concept_data: Dict[str, Any]) -> None:
+        """验证生成的概念数据的有效性"""
+        required_fields = [
+            "world_setting", "culture_background", "special_elements",
+            "core_conflict", "plot_outline", "subplot_design",
+            "key_events", "plot_progression", "main_characters",
+            "supporting_characters", "character_relationships",
+            "character_arcs", "theme_design", "philosophical_elements",
+            "social_commentary", "symbolic_system", "narrative_perspective",
+            "timeline_structure", "pacing_design", "foreshadowing",
+            "writing_style", "language_features", "atmosphere_building",
+            "literary_devices", "chapter_structure", "volume_planning",
+            "word_count_target", "estimated_chapters"
+        ]
+        
+        for field in required_fields:
+            if field not in concept_data:
+                raise ValueError(f"缺少必要字段: {field}")
+
+    def _process_concept_data(self, concept_data: Dict[str, Any]) -> Dict[str, Any]:
+        """处理生成的概念数据"""
+        # 确保所有字段都被转换为字符串（除了整数字段）
+        str_fields = [
+            "world_setting", "culture_background", "special_elements",
+            "core_conflict", "plot_outline", "subplot_design",
+            "key_events", "plot_progression", "main_characters",
+            "supporting_characters", "character_relationships",
+            "character_arcs", "theme_design", "philosophical_elements",
+            "social_commentary", "symbolic_system", "narrative_perspective",
+            "timeline_structure", "pacing_design", "foreshadowing",
+            "writing_style", "language_features", "atmosphere_building",
+            "literary_devices", "chapter_structure", "volume_planning"
+        ]
+        
+        for field in str_fields:
+            if isinstance(concept_data.get(field), (dict, list)):
+                concept_data[field] = json.dumps(concept_data[field], ensure_ascii=False)
+            elif not isinstance(concept_data.get(field), str):
+                concept_data[field] = str(concept_data.get(field, ''))
+                
+        # 确保整数字段是整数
+        int_fields = ["word_count_target", "estimated_chapters"]
+        for field in int_fields:
+            try:
+                concept_data[field] = int(concept_data.get(field, 0))
+            except (TypeError, ValueError):
+                concept_data[field] = 0
+                
+        return concept_data
+
+    async def generate_concept(self, prompt: str) -> Optional[Dict[str, Any]]:
+        """生成全文构思"""
+        response = await self._generate_content(prompt, "全文构思生成")
+        if not response:
+            return None
             
-        genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-2.5-pro')
-        current_app.logger.info("Initialized Gemini AI service with model: gemini-2.5-pro")
+        try:
+            # 尝试清理响应文本，移除可能的前后缀
+            cleaned_response = response.strip()
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]
+            cleaned_response = cleaned_response.strip()
+            
+            # 将所有行尾的换行符移除，确保JSON格式正确
+            cleaned_response = cleaned_response.replace('\n', ' ').replace('\r', '')
+            # 去除多余的空格
+            cleaned_response = ' '.join(cleaned_response.split())
+            
+            # 尝试预验证JSON格式
+            try:
+                # 先尝试解析一次，如果失败就记录错误的具体位置
+                json.loads(cleaned_response)
+            except json.JSONDecodeError as e:
+                current_app.logger.error(f"JSON预验证失败: {str(e)}")
+                current_app.logger.error(f"错误位置附近的内容: {cleaned_response[max(0, e.pos-50):min(len(cleaned_response), e.pos+50)]}")
+                raise
+
+            current_app.logger.info(f"清理后的JSON响应: {cleaned_response[:200]}...")
+            
+            # 解析JSON
+            concept_data = json.loads(cleaned_response)
+            # 验证必要字段
+            self._validate_concept_data(concept_data)
+            # 处理字段数据类型
+            processed_data = self._process_concept_data(concept_data)
+            return processed_data
+            
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"解析JSON失败: {str(e)}")
+            return None
+        except ValueError as e:
+            current_app.logger.error(f"概念数据验证失败: {str(e)}")
+            return None
+        except Exception as e:
+            current_app.logger.error(f"处理概念数据时发生未知错误: {str(e)}")
+            return None
+            # 尝试解析一次，如果失败就记录错误的具体位置
+            json.loads(cleaned_response)
+
+            current_app.logger.info(f"清理后的JSON响应: {cleaned_response[:200]}...")
+
+            # 解析JSON
+            concept_data = json.loads(cleaned_response)
 
     async def _generate_content(self, prompt: str, feature_name: str = "未指定功能") -> Optional[str]:
         """生成内容的通用方法"""
@@ -120,17 +240,17 @@ class GeminiAIService(BaseAIService):
             
             # 验证和转换结果格式
             validated_result: List[Dict[str, str]] = []
-            for item in result:
-                if not isinstance(item, dict):
-                    continue
-                item_dict = cast(Dict[Any, Any], item)
-                validated_item = {
+            json_result = cast(JSONList, result)
+            
+            for item_dict in json_result:
+                # 创建新的字典，确保所有值都是字符串
+                idea_item = {
                     'summary': str(item_dict.get('summary', '')),
                     'genre': str(item_dict.get('genre', '')),
                     'theme': str(item_dict.get('theme', '')),
                     'innovation': str(item_dict.get('innovation', ''))
                 }
-                validated_result.append(validated_item)
+                validated_result.append(idea_item)
             
             return validated_result
             
@@ -142,24 +262,94 @@ class GeminiAIService(BaseAIService):
             current_app.logger.error(f"Gemini AI创意生成过程出错: {str(e)}")
             return None
 
-    async def enhance_basic_concept(self, content: str) -> Optional[str]:
-        """完善基本构思"""
-        system_prompt = """你是一个专业的小说创作顾问。你的任务是帮助作者完善作品的基本构思。
-        你需要基于作者的创意构思，提供以下方面的具体建议和构思：
-        1. 世界观设定：构建完整的故事背景
-        2. 故事框架：确定核心冲突、主要情节发展、转折点
-        3. 人物系统：设计主要人物性格、关系网络、成长轨迹
-        4. 叙事策略：确定叙事视角、时间线处理、节奏控制
-        5. 主题表达：设计主题的呈现方式和层次
-        
-        注意平衡以下要素：
-        - 创新性与可行性
-        - 深度与可读性
-        - 艺术性与商业性
+    async def enhance_basic_concept(self, expansion: Dict[str, str]) -> Optional[Dict[str, str]]:
+        """生成全文构思"""
+        system_prompt = """你是一个专业的小说策划顾问。你的任务是基于提供的创意构思，生成一个详尽的长篇小说构思方案。
+        请以JSON格式返回，必须包含以下所有字段（注意：必须返回可解析的JSON，不要添加额外说明）：
+
+        {
+            "world_setting": "详细的时代背景、社会环境介绍",
+            "culture_background": "具体的文化背景、风俗习惯、社会制度描述",
+            "special_elements": "特殊元素（如魔法系统、科技水平等）的具体设定",
+            
+            "core_conflict": "核心矛盾和冲突的本质及其社会/个人意义",
+            "plot_outline": "完整的故事大纲，包括开端、发展、高潮、结局",
+            "subplot_design": "2-3条重要子情节的设计及其与主线的关系",
+            "key_events": "5-8个关键事件的具体设计",
+            "plot_progression": "情节推进的方式和节奏控制的具体规划",
+            
+            "main_characters": "3-5个主要人物的详细设定（性格、背景、动机等）",
+            "supporting_characters": "5-8个重要配角的简要设定",
+            "character_relationships": "主要人物之间的关系网络及其演变",
+            "character_arcs": "主要人物的成长轨迹和改变历程",
+            
+            "theme_design": "核心主题的具体阐释和表达方式",
+            "philosophical_elements": "作品中的哲学思考和意义探讨",
+            "social_commentary": "对现实社会问题的隐喻和思考",
+            "symbolic_system": "重要象征元素的系统设计",
+            
+            "narrative_perspective": "叙事视角的选择及其效果分析",
+            "timeline_structure": "时间线的具体安排和特殊处理",
+            "pacing_design": "故事节奏的具体规划和情感曲线",
+            "foreshadowing": "主要伏笔的设置和呼应设计",
+            
+            "writing_style": "整体写作风格的定位和特点",
+            "language_features": "语言特色的具体规划",
+            "atmosphere_building": "不同场景的氛围营造方式",
+            "literary_devices": "计划使用的主要文学手法",
+            
+            "chapter_structure": "章节的组织结构和划分原则",
+            "volume_planning": "分卷的规划（如果需要）",
+            "word_count_target": 预计字数（整数）,
+            "estimated_chapters": 预计章节数（整数）
+        }
+
+        要求：
+        1. 所有设计必须统一、和谐，相互支持
+        2. 确保所有元素都围绕核心主题展开
+        3. 充分考虑商业价值和艺术价值的平衡
+        4. 特别注意人物和情节的可信度
+        5. 为创作团队提供清晰的创作指导
         """
 
-        prompt = system_prompt + f"\n\n基于以下创意构思，提供完整的基本构思方案：\n{content}"
-        return await self._generate_content(prompt, "基本构思完善")
+        # 构建创意信息
+        concept_info = f"""创意概述：{expansion.get('summary', '')}
+体裁：{expansion.get('genre', '')}
+主题：{expansion.get('theme', '')}
+创新点：{expansion.get('innovation_points', '')}"""
+
+        prompt = system_prompt + f"\n\n基于以下创意信息，生成完整的长篇小说构思方案：\n{concept_info}"
+        response = await self._generate_content(prompt, "全文构思生成")
+        if not response:
+            return None
+            
+        try:
+            # 尝试清理响应文本，移除可能的前后缀
+            cleaned_response = response.strip()
+            if cleaned_response.startswith('```json'):
+                cleaned_response = cleaned_response[7:]
+            if cleaned_response.endswith('```'):
+                cleaned_response = cleaned_response[:-3]
+            cleaned_response = cleaned_response.strip()
+
+            current_app.logger.info(f"清理后的JSON响应: {cleaned_response[:200]}...")
+
+            # 尝试解析JSON响应
+            concept_data = json.loads(cleaned_response)
+            # 验证必要字段
+            self._validate_concept_data(concept_data)
+            # 处理字段数据类型
+            processed_data = self._process_concept_data(concept_data)
+            return processed_data
+            
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"解析全文构思JSON失败: {str(e)}")
+            current_app.logger.error(f"原始响应: {response[:200]}")
+            return None
+        except Exception as e:
+            current_app.logger.error(f"处理全文构思失败: {str(e)}")
+            return None
+
 
     async def generate_outline(self, content: str) -> Optional[str]:
         """生成全文大纲"""
@@ -267,26 +457,30 @@ class GeminiAIService(BaseAIService):
     async def generate_section_content(self, section_summary: str) -> Optional[str]:
         """生成段落正文"""
         system_prompt = """你是一个专业的小说创作者。你的任务是基于段落概要，创作出生动的段落正文。
-        正文创作要求：
-        1. 文字表现
-           - 生动形象的描写
-           - 富有感染力的叙述
-           - 自然流畅的对话
-        2. 细节处理
-           - 丰富的环境细节
-           - 传神的人物刻画
-           - 细腻的心理描写
-        3. 艺术性追求
-           - 恰当的修辞运用
-           - 优美的语言风格
-           - 富有韵律感的文字
-        
-        要求：
-        - 符合作品整体风格
-        - 感情真挚自然
-        - 细节丰富传神
-        - 避免说教和刻意
-        """
+
+正文创作要求：
+1. 文字表现
+   - 生动形象的描写
+   - 富有感染力的叙述
+   - 自然流畅的对话
+2. 细节处理
+   - 丰富的环境细节
+   - 传神的人物刻画
+   - 细腻的心理描写
+3. 艺术性追求
+   - 合理的修辞手法
+   - 恰当的意象运用
+   - 优美的语言风格
+4. 结构安排
+   - 段落层次分明
+   - 过渡自然流畅
+   - 重点突出明确
+
+输出要求：
+- 直接输出正文内容，不需要任何额外说明或标注
+- 保持内容的连贯性和完整性
+- 确保文字优美且富有感染力
+- 严格遵循中文创作规范"""
 
         prompt = system_prompt + f"\n\n基于以下段落概要，创作段落正文：\n{section_summary}"
         return await self._generate_content(prompt, "段落正文创作")

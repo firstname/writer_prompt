@@ -10,8 +10,8 @@ class BaseAIService(ABC):
         pass
 
     @abstractmethod
-    async def enhance_basic_concept(self, content: str) -> Optional[str]:
-        """完善基本构思"""
+    async def enhance_basic_concept(self, expansion: Dict[str, str]) -> Optional[Dict[str, str]]:
+        """基于创意发散生成全文构思，返回全文构思的各个部分"""
         pass
 
     @abstractmethod

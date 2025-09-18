@@ -13,11 +13,12 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from app.routes import main, project, outline, content, planning
+    from app.routes import main, project, outline, content, planning, concept
     app.register_blueprint(main.bp)
     app.register_blueprint(project.bp)
     app.register_blueprint(outline.bp)
     app.register_blueprint(content.bp)
     app.register_blueprint(planning.bp)
+    app.register_blueprint(concept.bp)
 
     return app

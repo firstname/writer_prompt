@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>创意发散</h2>
+            <p class="text-muted">基于初始灵感，探索不同的故事可能性</p>
+        </div>
+        <div class="col-auto">
+            <button id="generateMoreBtn" class="btn btn-primary">生成更多创意</button>
+        </div>
+    </div>
+
+    <div id="expansionsList" class="row">
+        {% for expansion in expansions %}
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">构思 #{{ expansion.id }}</h5>
+                    
+                    <div class="mb-3">
+                        <strong>简述：</strong>
+                        <p>{{ expansion.summary }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>体裁：</strong>
+                        <span>{{ expansion.genre }}</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>主题：</strong>
+                        <p>{{ expansion.theme }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>创新点：</strong>
+                        <p>{{ expansion.innovation_points }}</p>
+                    </div>
+
+                    <div class="text-end mt-3">
+                        <button class="btn btn-outline-primary generate-concept-btn" 
+                                data-expansion-id="{{ expansion.id }}"
+                                {% if expansion.has_concept %}disabled{% endif %}>
+                            {% if expansion.has_concept %}
+                            已生成全文构思
+                            {% else %}
+                            生成全文构思
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 全局加载提示 -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">正在加载...</span>
+        </div>
+        <div class="mt-2">正在生成，请稍候...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 生成更多创意
+    $('#generateMoreBtn').click(function() {
+        generateMoreExpansions();
+    });
+
+    // 生成全文构思
+    $('.generate-concept-btn').click(function() {
+        var $btn = $(this);
+        var expansionId = $btn.data('expansion-id');
+        generateConcept(expansionId, $btn);
+    });
+});
+
+function generateMoreExpansions() {
+    var $btn = $('#generateMoreBtn');
+    $btn.prop('disabled', true).text('正在生成...');
+    $('#loadingOverlay').removeClass('d-none');
+
+    $.ajax({
+        url: '/planning/generate_more_expansions',
+        method: 'POST',
+        success: function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert('生成失败：' + response.message);
+            }
+        },
+        error: function() {
+            alert('生成失败，请重试');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).text('生成更多创意');
+            $('#loadingOverlay').addClass('d-none');
+        }
+    });
+}
+
+function generateConcept(expansionId, $btn) {
+    $btn.prop('disabled', true).text('正在生成...');
+    $('#loadingOverlay').removeClass('d-none');
+
+    $.ajax({
+        url: '/concept/generate/' + expansionId,
+        method: 'POST',
+        success: function(response) {
+            if (response.success) {
+                window.location.href = '/concept/' + response.data.id;
+            } else {
+                alert('生成失败：' + response.message);
+            }
+        },
+        error: function() {
+            alert('生成失败，请重试');
+        },
+        complete: function() {
+            $btn.prop('disabled', false).text('生成全文构思');
+            $('#loadingOverlay').addClass('d-none');
+        }
+    });
+}
+</script>
+{% endblock %}

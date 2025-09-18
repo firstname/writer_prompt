@@ -1,4 +1,5 @@
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, Union
+import json
 from flask import current_app
 from app.models import db
 from app.models.planning import InitialIdea, CreativeExpansion, BasicConcept
@@ -96,16 +97,58 @@ class PlanningController:
             if not concept_dict:
                 return None
             
-            # 保存基本构思
+            def serialize_value(value: Union[Dict[str, Any], Any]) -> Optional[str]:
+                """Helper to serialize values to string format if they're dictionaries"""
+                if isinstance(value, dict):
+                    return json.dumps(value, ensure_ascii=False)
+                return str(value) if value is not None else None
+
+            # 保存基本构思，确保所有字段都被序列化为字符串
             concept = BasicConcept(
                 project_id=expansion.project_id,
                 creative_expansion_id=expansion.id,
-                world_setting=concept_dict.get('world_setting'),
-                plot_development=concept_dict.get('plot_development'),
-                character_design=concept_dict.get('character_design'),
-                structure_design=concept_dict.get('structure_design'),
-                style_design=concept_dict.get('style_design'),
-                theme_expression=concept_dict.get('theme_expression')
+                
+                # 世界观设定
+                world_setting=serialize_value(concept_dict.get('world_setting')),
+                culture_background=serialize_value(concept_dict.get('culture_background')),
+                special_elements=serialize_value(concept_dict.get('special_elements')),
+                
+                # 故事架构
+                core_conflict=serialize_value(concept_dict.get('core_conflict')),
+                plot_outline=serialize_value(concept_dict.get('plot_outline')),
+                subplot_design=serialize_value(concept_dict.get('subplot_design')),
+                key_events=serialize_value(concept_dict.get('key_events')),
+                plot_progression=serialize_value(concept_dict.get('plot_progression')),
+                
+                # 人物系统
+                main_characters=serialize_value(concept_dict.get('main_characters')),
+                supporting_characters=serialize_value(concept_dict.get('supporting_characters')),
+                character_relationships=serialize_value(concept_dict.get('character_relationships')),
+                character_arcs=serialize_value(concept_dict.get('character_arcs')),
+                
+                # 主题与深度
+                theme_design=serialize_value(concept_dict.get('theme_design')),
+                philosophical_elements=serialize_value(concept_dict.get('philosophical_elements')),
+                social_commentary=serialize_value(concept_dict.get('social_commentary')),
+                symbolic_system=serialize_value(concept_dict.get('symbolic_system')),
+                
+                # 叙事策略
+                narrative_perspective=serialize_value(concept_dict.get('narrative_perspective')),
+                timeline_structure=serialize_value(concept_dict.get('timeline_structure')),
+                pacing_design=serialize_value(concept_dict.get('pacing_design')),
+                foreshadowing=serialize_value(concept_dict.get('foreshadowing')),
+                
+                # 写作风格
+                writing_style=serialize_value(concept_dict.get('writing_style')),
+                language_features=serialize_value(concept_dict.get('language_features')),
+                atmosphere_building=serialize_value(concept_dict.get('atmosphere_building')),
+                literary_devices=serialize_value(concept_dict.get('literary_devices')),
+                
+                # 规划信息
+                chapter_structure=serialize_value(concept_dict.get('chapter_structure')),
+                volume_planning=serialize_value(concept_dict.get('volume_planning')),
+                word_count_target=int(concept_dict.get('word_count_target', 0)),
+                estimated_chapters=int(concept_dict.get('estimated_chapters', 0))
             )
             
             db.session.add(concept)
