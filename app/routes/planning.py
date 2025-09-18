@@ -20,10 +20,14 @@ def view_concepts(project_id: int):
     for concept in concepts:
         concept.expansion = CreativeExpansion.query.get(concept.creative_expansion_id)
     
+    # 获取所有项目用于侧边栏
+    projects = Project.query.all()
+    
     return render_template(
         'planning/concepts.html',
         project=project,
-        concepts=concepts
+        concepts=concepts,
+        projects=projects
     )
 
 @bp.route('/initial-idea', methods=['GET', 'POST'])

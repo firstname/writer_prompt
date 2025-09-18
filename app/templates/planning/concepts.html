@@ -1,73 +1,64 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h2>全文构思列表</h2>
-            <p class="text-muted">查看项目的所有全文构思方案</p>
-        </div>
+    <div class="mb-4">
+        <h2>全文构思列表</h2>
+        <p class="text-muted">查看项目的所有全文构思方案</p>
     </div>
 
-    <div class="row">
+    <div class="concepts-grid">
         {% for concept in concepts %}
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">构思 #{{ concept.id }}</h5>
-                    <small class="text-muted">{{ concept.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                </div>
-                <div class="card-body">
-                    {% if concept.expansion %}
-                    <div class="mb-3">
-                        <strong>原创意简述：</strong>
-                        <p>{{ concept.expansion.summary }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>体裁：</strong>
-                        <span>{{ concept.expansion.genre }}</span>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <strong>主题：</strong>
-                        <p>{{ concept.expansion.theme }}</p>
-                    </div>
-                    {% endif %}
+        <div class="concept-card">
+            <div class="concept-header">
+                <h5 class="mb-0">构思 #{{ concept.id }}</h5>
+                <small class="text-muted">{{ concept.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
 
-                    <div class="mb-3">
-                        <h6>核心冲突</h6>
-                        <p class="text-muted">{{ concept.core_conflict[:200] + '...' if concept.core_conflict|length > 200 else concept.core_conflict }}</p>
-                    </div>
-
-                    <div class="mb-3">
-                        <h6>主要人物</h6>
-                        <p class="text-muted">{{ concept.main_characters[:200] + '...' if concept.main_characters|length > 200 else concept.main_characters }}</p>
-                    </div>
-
-                    <div class="text-end mt-3">
-                        <a href="{{ url_for('concept.show_concept', concept_id=concept.id) }}" class="btn btn-outline-primary">
-                            查看详情
-                        </a>
-                    </div>
+            <div class="concept-content">
+                {% if concept.expansion %}
+                <div class="mb-3">
+                    <strong>原创意简述：</strong>
+                    <p class="mt-2">{{ concept.expansion.summary }}</p>
                 </div>
-                <div class="card-footer">
-                    <div class="row text-muted small">
-                        <div class="col">
-                            <strong>预计字数：</strong> {{ concept.word_count_target }}
-                        </div>
-                        <div class="col text-end">
-                            <strong>预计章节数：</strong> {{ concept.estimated_chapters }}
-                        </div>
-                    </div>
+                
+                <div class="mb-3">
+                    <strong>体裁：</strong>
+                    <span>{{ concept.expansion.genre }}</span>
                 </div>
+                
+                <div class="mb-3">
+                    <strong>主题：</strong>
+                    <p class="mt-2">{{ concept.expansion.theme }}</p>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <h6>核心冲突</h6>
+                    <p class="text-muted mt-2">{{ concept.core_conflict[:200] + '...' if concept.core_conflict|length > 200 else concept.core_conflict }}</p>
+                </div>
+
+                <div class="mb-3">
+                    <h6>主要人物</h6>
+                    <p class="text-muted mt-2">{{ concept.main_characters[:200] + '...' if concept.main_characters|length > 200 else concept.main_characters }}</p>
+                </div>
+            </div>
+
+            <div class="concept-stats text-muted small mb-3">
+                <div class="d-flex justify-content-between">
+                    <span><strong>预计字数：</strong> {{ concept.word_count_target }}</span>
+                    <span><strong>预计章节数：</strong> {{ concept.estimated_chapters }}</span>
+                </div>
+            </div>
+
+            <div class="text-end">
+                <a href="{{ url_for('concept.show_concept', concept_id=concept.id) }}" class="btn btn-outline-primary">
+                    查看详情
+                </a>
             </div>
         </div>
         {% else %}
-        <div class="col-12">
-            <div class="alert alert-info">
-                还没有生成任何全文构思。请先从创意发散中选择一个创意，然后生成全文构思。
-            </div>
+        <div class="alert alert-info">
+            还没有生成任何全文构思。请先从创意发散中选择一个创意，然后生成全文构思。
         </div>
         {% endfor %}
     </div>

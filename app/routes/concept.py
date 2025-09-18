@@ -55,4 +55,6 @@ async def generate_concept(expansion_id):
 def show_concept(concept_id):
     """显示全文构思"""
     concept = BasicConcept.query.get_or_404(concept_id)
-    return render_template('planning/concept.html', concept=concept)
+    from app.models import Project
+    projects = Project.query.all()
+    return render_template('planning/concept.html', concept=concept, projects=projects)
